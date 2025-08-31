@@ -3,7 +3,10 @@ package com.Saatake.CadastroUsuarios.tasks;
 import com.Saatake.CadastroUsuarios.user.UserModel;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList
 import class.UserModel
+
 
 @Entity
 @Table(name = "tb_tarefas")
@@ -17,7 +20,8 @@ public class TaskModel {
     private TaskStatus status;
     private LocalDateTime dataCriacao;
 
-    private UserModel user;
+    @OneToMany(mappedBy = "tarefas")
+    private List<UserModel> user = new ArrayList<UserModel>();
 
     public TaskModel() {
     }
@@ -27,7 +31,7 @@ public class TaskModel {
         this.descricao = descricao;
         this.status = status;
         this.dataCriacao = dataCriacao;
-    }
+    }=
 
     public String getNome() {
         return nome;

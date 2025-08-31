@@ -2,8 +2,7 @@ package com.Saatake.CadastroUsuarios.user;
 
 import com.Saatake.CadastroUsuarios.tasks.TaskModel;
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
+
 
 import package.TaskModel
 
@@ -17,7 +16,11 @@ public class UserModel {
     private String nome;
     private String email;
     private Integer idade;
-    private List<TaskModel> tarefas = new ArrayList<TaskModel>();
+
+    @ManyToOne
+    @JoinColumn(name = "tarefas_id") //Foreign Key
+    private  TaskModel tarefas;
+
 
     public UserModel() {
     }
