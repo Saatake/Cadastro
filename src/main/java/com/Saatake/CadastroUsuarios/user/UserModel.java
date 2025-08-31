@@ -1,8 +1,11 @@
-package com.Saatake.CadastroUsuarios;
+package com.Saatake.CadastroUsuarios.user;
 
+import com.Saatake.CadastroUsuarios.tasks.TaskModel;
 import jakarta.persistence.*;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.web.bind.annotation.GetMapping;
+import java.util.ArrayList;
+import java.util.List;
+
+import package.TaskModel
 
 @Entity
 @Table(name = "tb_cadastro")
@@ -14,6 +17,7 @@ public class UserModel {
     private String nome;
     private String email;
     private Integer idade;
+    private List<TaskModel> tarefas = new ArrayList<TaskModel>();
 
     public UserModel() {
     }
