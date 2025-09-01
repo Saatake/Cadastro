@@ -20,6 +20,7 @@ public class UserModel {
     private Long id;
     private String nome;
     private String email;
+    private String senha;
     private Integer idade;
 
     @ManyToOne
