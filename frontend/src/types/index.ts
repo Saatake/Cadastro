@@ -21,8 +21,3 @@ export enum TaskStatus {
   EM_ANDAMENTO = 'EM_ANDAMENTO',
   FINALIZADO = 'FINALIZADO'
 }
-
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-}

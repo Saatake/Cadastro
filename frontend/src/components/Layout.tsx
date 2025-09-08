@@ -3,57 +3,65 @@ import { Users, CheckSquare, Home } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentPage: 'home' | 'users' | 'tasks';
-  onPageChange: (page: 'home' | 'users' | 'tasks') => void;
+  currentView: string;
+  onViewChange: (view: string) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, currentPage, onPageChange }) => {
-  const navItems = [
-    { id: 'home' as const, label: 'Dashboard', icon: Home },
-    { id: 'users' as const, label: 'Usuários', icon: Users },
-    { id: 'tasks' as const, label: 'Tarefas', icon: CheckSquare },
+const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewChange }) => {
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'users', label: 'Usuários', icon: Users },
+    { id: 'tasks', label: 'Tarefas', icon: CheckSquare },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold text-primary-600">
-                  Sistema de Cadastro
-                </h1>
-              </div>
+              <CheckSquare className="h-8 w-8 text-blue-600 mr-3" />
+              <h1 className="text-xl font-semibold text-gray-900">
+                Sistema de Cadastro
+              </h1>
             </div>
-            <nav className="flex space-x-8">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => onPageChange(item.id)}
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                      currentPage === item.id
-                        ? 'text-primary-600 bg-primary-50'
-                        : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      <div className="flex">
+        {/* Sidebar */}
+        <nav className="w-64 bg-white shadow-sm min-h-screen">
+          <div className="p-4">
+            <ul className="space-y-2">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => onViewChange(item.id)}
+                      className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                        currentView === item.id
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      <Icon className="mr-3 h-5 w-5" />
+                      {item.label}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <main className="flex-1 p-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

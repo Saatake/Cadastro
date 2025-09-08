@@ -1,87 +1,176 @@
-import React from 'react';
-import { User } from '../types';
-import { Edit, Trash2, Mail, User as UserIcon, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Task } from '../types';
+import { userApi, taskApi } from '../services/api';
+import UserForm from './UserForm';
+import { Plus, Edit, Trash2, Mail, User as UserIcon } from 'lucide-react';
 
-interface UserListProps {
-  users: User[];
-  onEdit: (user: User) => void;
-  onDelete: (id: number) => void;
-  isLoading?: boolean;
-}
+const UserList: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | undefined>();
 
-const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete, isLoading }) => {
-  if (isLoading) {
+  useEffect(() => {
+    fetchUsers();
+    fetchTasks();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await userApi.getAll();
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const response = await taskApi.getAll();
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar tarefas:', error);
+    }
+  };
+
+  const handleSubmit = async (userData: Omit<User, 'id'>) => {
+    try {
+      if (editingUser) {
+        await userApi.update(editingUser.id!, userData);
+      } else {
+        await userApi.create(userData);
+      }
+      fetchUsers();
+      setShowForm(false);
+      setEditingUser(undefined);
+    } catch (error) {
+      console.error('Erro ao salvar usuário:', error);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
+      try {
+        await userApi.delete(id);
+        fetchUsers();
+      } catch (error) {
+        console.error('Erro ao excluir usuário:', error);
+      }
+    }
+  };
+
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    setShowForm(true);
+  };
+
+  if (loading) {
     return (
-      <div className="card">
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 bg-gray-200 rounded"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="card text-center py-12">
-        <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário cadastrado</h3>
-        <p className="text-gray-500">Comece adicionando seu primeiro usuário.</p>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {users.map((user) => (
-        <div key={user.id} className="card hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-5 h-5 text-primary-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{user.nome}</h3>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Mail className="w-4 h-4 mr-1" />
-                    {user.email}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {user.idade} anos
-                </div>
-                {user.tarefas && (
-                  <div className="flex items-center">
-                    <span className="w-2 h-2 bg-primary-500 rounded-full mr-2"></span>
-                    Tarefa: {user.tarefas.nome}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => onEdit(user)}
-                className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors duration-200"
-                title="Editar usuário"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => user.id && onDelete(user.id)}
-                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                title="Excluir usuário"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Novo Usuário</span>
+        </button>
+      </div>
+
+      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Usuário
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Idade
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tarefa
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <UserIcon className="h-5 w-5 text-blue-600" />
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.nome}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center text-sm text-gray-900">
+                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                      {user.email}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.idade} anos
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.tarefas ? user.tarefas.nome : 'Nenhuma'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user.id!)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ))}
+      </div>
+
+      {showForm && (
+        <UserForm
+          user={editingUser}
+          tasks={tasks}
+          onSubmit={handleSubmit}
+          onCancel={() => {
+            setShowForm(false);
+            setEditingUser(undefined);
+          }}
+        />
+      )}
     </div>
   );
 };

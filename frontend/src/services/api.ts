@@ -10,7 +10,7 @@ const api = axios.create({
   },
 });
 
-// User API
+// User API calls
 export const userApi = {
   getAll: () => api.get<User[]>('/usuarios'),
   getById: (id: number) => api.get<User>(`/usuarios/${id}`),
@@ -19,7 +19,7 @@ export const userApi = {
   delete: (id: number) => api.delete(`/usuarios/${id}`),
 };
 
-// Task API
+// Task API calls
 export const taskApi = {
   getAll: () => api.get<Task[]>('/tarefas'),
   getById: (id: number) => api.get<Task>(`/tarefas/${id}`),

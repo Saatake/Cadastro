@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Task, TaskStatus, User } from '../types';
+import { Task, User, TaskStatus } from '../types';
 import { X } from 'lucide-react';
 
 interface TaskFormProps {
@@ -7,22 +7,15 @@ interface TaskFormProps {
   users: User[];
   onSubmit: (task: Omit<Task, 'id'>) => void;
   onCancel: () => void;
-  isLoading?: boolean;
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({
-  task,
-  users,
-  onSubmit,
-  onCancel,
-  isLoading = false,
-}) => {
+const TaskForm: React.FC<TaskFormProps> = ({ task, users, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
     status: TaskStatus.PENDENTE,
-    dataCriacao: '',
-    selectedUsers: [] as number[],
+    dataCriacao: new Date().toISOString().slice(0, 16),
+    user: [] as User[],
   });
 
   useEffect(() => {
@@ -31,111 +24,90 @@ const TaskForm: React.FC<TaskFormProps> = ({
         nome: task.nome,
         descricao: task.descricao,
         status: task.status,
-        dataCriacao: task.dataCriacao.slice(0, 16), // Format for datetime-local input
-        selectedUsers: task.user?.map(u => u.id!).filter(id => id !== undefined) || [],
+        dataCriacao: task.dataCriacao.slice(0, 16),
+        user: task.user || [],
       });
-    } else {
-      // Set default date to now
-      const now = new Date();
-      const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
-      setFormData(prev => ({
-        ...prev,
-        dataCriacao: localDateTime,
-      }));
     }
   }, [task]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const taskData: Omit<Task, 'id'> = {
-      nome: formData.nome,
-      descricao: formData.descricao,
-      status: formData.status,
-      dataCriacao: formData.dataCriacao,
-      user: formData.selectedUsers.map(id => ({ id } as User)),
-    };
-
-    onSubmit(taskData);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({
+    onSubmit({
       ...formData,
-      [e.target.name]: e.target.value,
+      dataCriacao: new Date(formData.dataCriacao).toISOString(),
     });
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleUserSelection = (userId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedUsers: prev.selectedUsers.includes(userId)
-        ? prev.selectedUsers.filter(id => id !== userId)
-        : [...prev.selectedUsers, userId]
-    }));
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        user: prev.user.some(u => u.id === userId)
+          ? prev.user.filter(u => u.id !== userId)
+          : [...prev.user, user],
+      }));
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">
             {task ? 'Editar Tarefa' : 'Nova Tarefa'}
           </h2>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600"
           >
-            <X className="w-6 h-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
-              Nome da Tarefa *
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nome
             </label>
             <input
               type="text"
-              id="nome"
               name="nome"
               value={formData.nome}
               onChange={handleChange}
               required
-              className="input-field"
-              placeholder="Digite o nome da tarefa"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-1">
-              Descrição *
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Descrição
             </label>
             <textarea
-              id="descricao"
               name="descricao"
               value={formData.descricao}
               onChange={handleChange}
               required
               rows={3}
-              className="input-field resize-none"
-              placeholder="Descreva a tarefa"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-              Status *
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
             </label>
             <select
-              id="status"
               name="status"
               value={formData.status}
               onChange={handleChange}
-              required
-              className="input-field"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={TaskStatus.PENDENTE}>Pendente</option>
               <option value={TaskStatus.EM_ANDAMENTO}>Em Andamento</option>
@@ -144,17 +116,16 @@ const TaskForm: React.FC<TaskFormProps> = ({
           </div>
 
           <div>
-            <label htmlFor="dataCriacao" className="block text-sm font-medium text-gray-700 mb-1">
-              Data de Criação *
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Data de Criação
             </label>
             <input
               type="datetime-local"
-              id="dataCriacao"
               name="dataCriacao"
               value={formData.dataCriacao}
               onChange={handleChange}
               required
-              className="input-field"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -162,41 +133,34 @@ const TaskForm: React.FC<TaskFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Usuários Associados
             </label>
-            <div className="max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
-              {users.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-2">
-                  Nenhum usuário cadastrado
-                </p>
-              ) : (
-                users.map((user) => (
-                  <label key={user.id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                    <input
-                      type="checkbox"
-                      checked={formData.selectedUsers.includes(user.id!)}
-                      onChange={() => handleUserSelection(user.id!)}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm text-gray-700">{user.nome}</span>
-                  </label>
-                ))
-              )}
+            <div className="max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2">
+              {users.map(user => (
+                <label key={user.id} className="flex items-center space-x-2 py-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.user.some(u => u.id === user.id)}
+                    onChange={() => handleUserSelection(user.id!)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm">{user.nome}</span>
+                </label>
+              ))}
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Salvando...' : task ? 'Atualizar' : 'Cadastrar'}
-            </button>
+          <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
               onClick={onCancel}
-              className="btn-secondary"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
               Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              {task ? 'Atualizar' : 'Criar'}
             </button>
           </div>
         </form>
